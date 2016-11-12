@@ -6,8 +6,11 @@ var game = new Phaser.Game(0, 0, Phaser.AUTO, 'area', {
     render: render
 });
 var cursors;
-var spaceKey;
+var plusKey;
+var minusKey;
 var worldScale = 1;
+var map;
+var initialZoom;
 
 // Called first
 function preload() {
@@ -16,73 +19,74 @@ function preload() {
     game.scale.setResizeCallback(function() {
         game.scale.setMaximum();
     });
+
+    // initialize keyboard
     this.cursors = game.input.keyboard.createCursorKeys();
+    plusKey = game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_ADD);
+    minusKey = game.input.keyboard.addKey(Phaser.Keyboard.NUMPAD_SUBTRACT);
+
+    // initialize zoom
+    initialZoom = 1;
 }
 
 // Called after preload
 function create() {
-    game.world.setBounds(0, 0, 3000, 2024);
-    game.add.sprite(0, 0, 'map');
+    var menuLeftWidth = 100;
+    var menuRightWidth = 100;
+    var menuTopHeight = 25;
+    var menuBottomHeight = 25;
+    var gameWidth = game.scale.dom.visualBounds.width; // width of the game (based on window width)
+    var gameHeight = game.scale.dom.visualBounds.height; // height of the game (based on window height)
+    var gameRatio = gameWidth / gameHeight;
 
-    // Create some text in the middle of the game area
-    var helloText = game.add.text(250, 250, 'Hello, Phaser!', {
-        fontSize: '32px',
-        fill: '#00F'
-    });
-    helloText.anchor.set(0.5, 0.5);
+    //manage map
+    map = game.add.sprite(menuLeftWidth, menuTopHeight, 'map');
+    var mapRatio = map.width / map.height;
+    if (mapRatio < gameRatio) {
+        map.width = (gameWidth - menuLeftWidth - menuRightWidth) * initialZoom;
+        map.height = (gameWidth / mapRatio) * initialZoom;
+    } else {
+        map.height = (gameHeight - menuTopHeight - menuBottomHeight) * initialZoom;
+        map.width = (gameHeight * mapRatio) * initialZoom;
+    }
 
-    spaceKey = game.input.keyboard.addKey(Phaser.Keyboard.SPACEBAR);
+    game.world.setBounds(0, 0, map.width + menuLeftWidth + menuRightWidth, map.height + menuTopHeight + menuBottomHeight);
+
+
+    //TODO: par défaut il faut centrer la camera
+    console.log(game.world.width);
+    console.log(gameWidth);
+    //game.camera.setPosition(((gameWidth - game.camera.width) * 0.5), ((gameHeight - game.camera.height) * 0.5));
 }
 
 // Called once every frame, ideally 60 times per second
 function update() {
+    var step = 4;
     if (this.cursors.up.isDown)
     {
-        game.camera.y -= 4;
+        game.camera.y -= step;
     }
     else if (this.cursors.down.isDown)
     {
-        game.camera.y += 4;
+        game.camera.y += step;
     }
 
     if (this.cursors.left.isDown)
     {
-        game.camera.x -= 4;
+        game.camera.x -= step;
     }
     else if (this.cursors.right.isDown)
     {
-        game.camera.x += 4;
+        game.camera.x += step;
     }
 
-    var mouseWorldX = game.input.worldX;
-    var mouseWorldY = game.input.worldY;
-
-    if (spaceKey.isDown)
+    if (plusKey.isDown)
     {
-        //var pointToZoomX = game.camera.x / worldScale + (game.camera.width * 0.5);
-        //var pointToZoomY = game.camera.y / worldScale + (game.camera.height * 0.5);
-
-        //game.camera.setPosition(0, 0);
-        //var pointToZoomX = (game.camera.width * 0.5) + (game.camera.x / worldScale);
-        //var pointToZoomY = (game.camera.height * 0.5) + (game.camera.y / worldScale);
-
-        var pointToZoomX = (game.camera.x + game.camera.width * 0.5) / worldScale;
-        var pointToZoomY = (game.camera.y + game.camera.height * 0.5) / worldScale;
-
-        console.log(pointToZoomX);
-        console.log(pointToZoomY);
-        worldScale += 0.05;
-
-        game.world.scale.set(worldScale);
-        console.log(worldScale);
-        console.log('------------------------');
-        //var pointToZoomX = 404;
-        //var pointToZoomY = 301;
-        var topLeftPointX = pointToZoomX * worldScale - (game.camera.width * 0.5);
-        var topLeftPointY = pointToZoomY * worldScale - (game.camera.height * 0.5);
-        game.camera.setPosition(topLeftPointX, topLeftPointY);
-        //game.camera.focusOnXY(545 * worldScale, 506 * worldScale);
-        //game.camera.focusOnXY(mouseWorldX, mouseWorldY);
+        zoom(true);
+    }
+    else if (minusKey.isDown)
+    {
+        zoom(false);
     }
 }
 
@@ -90,4 +94,21 @@ function render() {
 
     game.debug.cameraInfo(game.camera, 500, 32);
 
+}
+
+function zoom(zoomIn) {
+    var pointX = (game.camera.x + game.camera.width * 0.5) / worldScale;
+    var pointY = (game.camera.y + game.camera.height * 0.5) / worldScale;
+
+    if (zoomIn) {
+        worldScale =  worldScale > 4 / initialZoom ? 4 / initialZoom : worldScale + 0.02;
+    } else {
+        worldScale =  worldScale <= 1 / initialZoom ? 1 / initialZoom : worldScale - 0.02;
+    }
+    game.world.scale.set(worldScale);
+
+    var pointToZoomX = pointX * worldScale - (game.camera.width * 0.5);
+    var pointToZoomY = pointY * worldScale - (game.camera.height * 0.5);
+
+    game.camera.setPosition(pointToZoomX, pointToZoomY);
 }
