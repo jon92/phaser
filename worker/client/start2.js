@@ -53,10 +53,15 @@ function create() {
     game.world.setBounds(0, 0, map.width + menuLeftWidth + menuRightWidth, map.height + menuTopHeight + menuBottomHeight);
 
 
-    //TODO: par défaut il faut centrer la camera
-    console.log(game.world.width);
-    console.log(gameWidth);
-    //game.camera.setPosition(((gameWidth - game.camera.width) * 0.5), ((gameHeight - game.camera.height) * 0.5));
+
+    //centrage de la caméra
+    game.camera.setPosition(((game.world.width - gameWidth) * 0.5), ((game.world.height - gameHeight) * 0.5));
+
+    //var i = 0
+    //while(i <10) {
+    //    zoom(true);
+    //    i += 1;
+    //}
 }
 
 // Called once every frame, ideally 60 times per second
@@ -101,9 +106,9 @@ function zoom(zoomIn) {
     var pointY = (game.camera.y + game.camera.height * 0.5) / worldScale;
 
     if (zoomIn) {
-        worldScale =  worldScale > 4 / initialZoom ? 4 / initialZoom : worldScale + 0.02;
+        worldScale =  worldScale > (4 / initialZoom) ? (4 / initialZoom) : worldScale + 0.02;
     } else {
-        worldScale =  worldScale <= 1 / initialZoom ? 1 / initialZoom : worldScale - 0.02;
+        worldScale =  worldScale <= (1 / initialZoom) ? (1 / initialZoom) : worldScale - 0.02;
     }
     game.world.scale.set(worldScale);
 
